@@ -163,7 +163,8 @@ title('y_{I} in the Frequency Domain Recorded with RTL-SDR, f_{c} = 107.9e6 Hz a
 xlabel('Frequency [Hz]')
 ylabel('Magnitude of Message')
 
-processed_message = diff(message);
+% processed_message = diff(message);
+processed_message = message;
 processed_message(processed_message<0) = 0;
 processed_message = (processed_message)./(max(abs(processed_message)));
 
@@ -182,14 +183,14 @@ ylabel('Magnitude of Processed Message')
 %ylabel('Magnitude of Processed Message')
 
 t = [-10000:-1, 1:10000];
-omega = 2 * pi * 0.095e6 * (1/fs);
+omega = 2 * pi * 0.005e6 * (1/fs);
 %omega = 2 * pi * 0.1e6 * (1/fs);
 lpf = sin(omega*t)./(pi*t);
 
-processed_message = notch_filter(processed_message, 0, fs);
+% processed_message = notch_filter(processed_message, 0, fs);
 
 filtered = conv(processed_message, lpf);
-%filtered = conv(filtered, lpf);
+filtered = conv(filtered, lpf);
 
 
 figure
@@ -206,7 +207,7 @@ title('Frequency Domain of Normalized Message Signal After LPF')
 xlabel('Frequency [Hz]')
 ylabel('Magnitude y_{I}')
 plot_FT(processed_message, fs);
-%axis([-1.5e5 1.5e5 0 7000])
+axis([-1.5e5 1.5e5 0 7000])
 hold off
 
 
