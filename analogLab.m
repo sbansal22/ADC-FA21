@@ -1,4 +1,5 @@
 %% Analog Lab
+
 % @authors: Thomas Jagielski and Sparsh Bansal
 % September 2021
 
@@ -11,7 +12,7 @@ fc = 90.8e6; % this is the center frequency
 x = zeros(3e6,1); % empty vector to store data
 
 % create object for RTL-SDR receiver
-rx = comm.SDRRTLReceiver('CenterFrequency',fc, 'EnableTunerAGC', false, 'TunerGain', 35,  'SampleRate', fs);
+rx = comm.SDRRTLReceiver('CenterFrequency',fc, 'EnableTunerAGC', false, 'TunerGain', 49.6,  'SampleRate', fs);
 
 counter = 1; % initialize a counter
 while(counter < length(x)) % while the buffer for data is not full
@@ -24,6 +25,7 @@ end
 y_I = real(x)-mean(real(x));
 y_Q = imag(x)-mean(imag(x));
 
+
 figure
 plot_FT(y_I, fs);
 title('y_{I} in the Frequency Domain Recorded with RTL-SDR, f_{c} = 90.8e6 Hz and f_{s} = 300e3 s^{-1}')
@@ -33,8 +35,8 @@ ylabel('Magnitude y_{I}')
 %% d)
 time = (1:max(length(y_I)))/fs;
 
-zoom_bound_upper = max(length(y_I))/2 - 2000;
-zoom_bound_lower = max(length(y_I))/2 - 2500;
+zoom_bound_upper = 2020800; %2021000;
+zoom_bound_lower = 2020500; %2020300; 
 
 figure
 subplot(2,1,1)
@@ -78,8 +80,6 @@ xlabel('Time [s]')
 ylabel('Magnitude of Processed y_{I}')
 
 %% f)
-%processed_y_i = notch_filter(processed_y_i, 0, fs);
-
 t = [-10000:-1, 1:10000];
 %omega = 2 * pi * 0.095e6 * (1/fs);
 omega = 2 * pi * 0.1e6 * (1/fs);
@@ -88,19 +88,13 @@ lpf = sin(omega*t)./(pi*t);
 filtered = conv(processed_y_i, lpf);
 %filtered = conv(filtered, lpf);
 
-%figure
-%subplot(2,1,1)
-%plot(y_I)
-%hold on
-%subplot(2,1,2)
-%plot(filtered)
-%hold off
+filtered = (filtered)./(max(abs(filtered)));
 
 figure
 subplot(2,1,1)
 plot_FT(y_I, fs);
 hold on
-title('Frequency Domain of Normalized d/dt[y_{I}] Signal')
+title('Frequency Domain of y_{I}')
 xlabel('Frequency [Hz]')
 ylabel('Magnitude y_{I}')
 hold off
@@ -110,11 +104,20 @@ title('Frequency Domain of Normalized d/dt[y_{I}] Signal After LPF')
 xlabel('Frequency [Hz]')
 ylabel('Magnitude y_{I}')
 plot_FT(filtered, fs);
-axis([-1.5e5 1.5e5 0 7000])
+axis([-1.5e5 1.5e5 0 60000])
+hold off
+
+figure
+plot(time(zoom_bound_lower:zoom_bound_upper), processed_y_i(zoom_bound_lower:zoom_bound_upper))
+hold on
+plot(time(zoom_bound_lower:zoom_bound_upper), filtered(zoom_bound_lower:zoom_bound_upper))
+title('Normalized Differentiated y_{I}')
+xlabel('Time [s]')
+ylabel('Magnitude of Processed y_{I}')
+legend('Signal Before LPF', 'Signal After LPF', 'Location', 'southwest')
 hold off
 
 %% g)
-%filtered = filtered(30000:end);
 centered_signal = filtered - mean(filtered);
 processed_signal = (centered_signal * 3) ./ (max(abs(centered_signal)));
 processed_signal = decimate(processed_signal, 4);
@@ -128,18 +131,19 @@ xlabel('Time [s]')
 ylabel('Magnitude Y_{I}')
 
 sound(processed_signal, 300000/4)
+audiowrite('exercise1.wav',processed_signal,300000/4)
 
 %%
 %%%%% Exercise 2 %%%%%
 %% b)
 fs = 300e3; % this is the sample rate
 %fc = 107.9e6; % this is the center frequency
-fc = 97.7e6;
+fc = 94.5e6;
 
 x = zeros(3e6,1); % empty vector to store data
 
 % create object for RTL-SDR receiver
-rx = comm.SDRRTLReceiver('CenterFrequency',fc, 'EnableTunerAGC', false, 'TunerGain', 35,  'SampleRate', fs);
+rx = comm.SDRRTLReceiver('CenterFrequency',fc, 'EnableTunerAGC', false, 'TunerGain', 49.6,  'SampleRate', fs);
 
 counter = 1; % initialize a counter
 while(counter < length(x)) % while the buffer for data is not full
@@ -183,15 +187,14 @@ ylabel('Magnitude of Processed Message')
 %ylabel('Magnitude of Processed Message')
 
 t = [-10000:-1, 1:10000];
-omega = 2 * pi * 0.005e6 * (1/fs);
-%omega = 2 * pi * 0.1e6 * (1/fs);
+%omega = 2 * pi * 0.005e6 * (1/fs);
+omega = 2 * pi * 0.023e6 * (1/fs);
 lpf = sin(omega*t)./(pi*t);
 
 % processed_message = notch_filter(processed_message, 0, fs);
 
 filtered = conv(processed_message, lpf);
 filtered = conv(filtered, lpf);
-
 
 figure
 subplot(2,1,1)
@@ -206,13 +209,13 @@ hold on
 title('Frequency Domain of Normalized Message Signal After LPF')
 xlabel('Frequency [Hz]')
 ylabel('Magnitude y_{I}')
-plot_FT(processed_message, fs);
+plot_FT(filtered, fs);
 axis([-1.5e5 1.5e5 0 7000])
 hold off
 
 
 centered_signal = filtered - mean(filtered);
-processed_signal = (centered_signal * 3) ./ (max(abs(centered_signal)));
+processed_signal = (centered_signal * 1) ./ (max(abs(centered_signal)));
 processed_signal = decimate(processed_signal, 4);
 
 time = (1:max(length(processed_signal)))/fs;
@@ -224,3 +227,4 @@ xlabel('Time [s]')
 ylabel('Magnitude Y_{I}')
 
 sound(processed_signal, 300000/4)
+audiowrite('exercise2_94_5-2.wav',processed_signal,300000/4)
